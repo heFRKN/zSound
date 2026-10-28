@@ -50,11 +50,11 @@ namespace zSound
             get
             {
                 var s = S.DurationSec > 0 ? Dur(S.DurationSec) : "—";
-                if (S.Target == OutputTarget.MicOnly) s += " · sadece mikrofon";
-                else if (S.Target == OutputTarget.SpeakersOnly) s += " · sadece ben";
+                if (S.Target == OutputTarget.MicOnly) s += L.T("subMicOnly");
+                else if (S.Target == OutputTarget.SpeakersOnly) s += L.T("subMeOnly");
                 if (Math.Abs(S.Speed - 1f) > 0.01f) s += " · " + S.Speed.ToString("0.##", CultureInfo.InvariantCulture) + "x";
-                if (S.Loop) s += " · döngü";
-                if (S.HoldToPlay) s += " · basılı tut";
+                if (S.Loop) s += L.T("subLoop");
+                if (S.HoldToPlay) s += L.T("subHold");
                 return s;
             }
         }

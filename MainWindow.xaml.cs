@@ -104,6 +104,7 @@ namespace zSound
             InitSettingsView();
             UpdateApo();
             InitTray();
+            L.Changed += OnLanguageChanged;
             UpdateEmpty();
             UpdateStatus();
             tick.Start();
@@ -175,10 +176,10 @@ namespace zSound
             for (int i = 0; i < files.Count; i++)
             {
                 var f = files[i];
-                SetStatus(files.Count == 1 ? "Kopyalanıyor…" : $"Kopyalanıyor… ({i + 1}/{files.Count})", false);
+                SetStatus(files.Count == 1 ? L.T("copying") : L.F("copyingN", i + 1, files.Count), false);
                 string stored;
                 try { stored = await Task.Run(() => Library.Import(f)); }
-                catch (Exception ex) { err = "Eklenemedi: " + Path.GetFileName(f) + " (" + ex.Message + ")"; continue; }
+                catch (Exception ex) { err = L.F("addFailed", Path.GetFileName(f), ex.Message); continue; }
                 var s = new Sound { Path = stored, Source = f, Name = UniqueName(Path.GetFileNameWithoutExtension(f)) };
                 cfg.Sounds.Add(s);
                 var vm = new SoundVM(s);
@@ -287,8 +288,8 @@ namespace zSound
         void Add_Click(object sender, RoutedEventArgs e)
         {
             var m = new ContextMenu { PlacementTarget = (UIElement)sender, Placement = PlacementMode.Bottom };
-            m.Items.Add(Item("", "Dosya ekle…", AddFiles));
-            m.Items.Add(Item("", "Klasör ekle…", AddFolder));
+            m.Items.Add(Item("", L.T("menuAddFiles"), AddFiles));
+            m.Items.Add(Item("", L.T("menuAddFolder"), AddFolder));
             m.IsOpen = true;
         }
 
@@ -297,15 +298,15 @@ namespace zSound
             var d = new OpenFileDialog
             {
                 Multiselect = true,
-                Title = "Ses / video seç",
-                Filter = "Ses ve video|" + string.Join(";", Exts.Select(x => "*" + x)) + "|Tüm dosyalar|*.*"
+                Title = L.T("dlgPick"),
+                Filter = L.T("dlgFilter") + "|" + string.Join(";", Exts.Select(x => "*" + x)) + "|" + L.T("dlgAll") + "|*.*"
             };
             if (d.ShowDialog(this) == true) AddPaths(d.FileNames);
         }
 
         void AddFolder()
         {
-            var d = new OpenFolderDialog { Title = "Klasör seç (alt klasörler dahil)" };
+            var d = new OpenFolderDialog { Title = L.T("dlgFolder") };
             if (d.ShowDialog(this) == true) AddPaths(new[] { d.FolderName });
         }
 
@@ -329,25 +330,25 @@ namespace zSound
             if (sel.Count == 1)
             {
                 bool playing = engine.IsPlaying(one.S);
-                RowMenu.Items.Add(playing ? Item("", "Durdur", () => engine.Stop(one.S)) : Item("", "Çal", () => Play(one.S)));
-                RowMenu.Items.Add(Item("", "Kırp / düzenle", () => OpenEditor(one)));
-                RowMenu.Items.Add(Item("", "Kısayol ata", () => { OpenEditor(one); SoundKey_Click(BtnSoundKey, null); }));
-                RowMenu.Items.Add(Item("", "Yukarı taşı", () => MoveBy(one, -1)));
-                RowMenu.Items.Add(Item("", "Aşağı taşı", () => MoveBy(one, 1)));
+                RowMenu.Items.Add(playing ? Item("", L.T("stop"), () => engine.Stop(one.S)) : Item("", L.T("play"), () => Play(one.S)));
+                RowMenu.Items.Add(Item("", L.T("rowEdit"), () => OpenEditor(one)));
+                RowMenu.Items.Add(Item("", L.T("rowAssignKey"), () => { OpenEditor(one); SoundKey_Click(BtnSoundKey, null); }));
+                RowMenu.Items.Add(Item("", L.T("rowUp"), () => MoveBy(one, -1)));
+                RowMenu.Items.Add(Item("", L.T("rowDown"), () => MoveBy(one, 1)));
             }
             bool allFav = sel.All(v => v.S.Favorite);
-            RowMenu.Items.Add(Item(allFav ? "" : "", allFav ? "Favoriden çıkar" : "Favorilere ekle", () =>
+            RowMenu.Items.Add(Item(allFav ? "" : "", allFav ? L.T("rowUnfav") : L.T("rowFav"), () =>
             {
                 foreach (var v in sel) { v.S.Favorite = !allFav; v.Refresh(); }
                 view.Refresh(); SaveSoon();
             }));
             if (sel.Count == 1)
-                RowMenu.Items.Add(Item("", "Dosya konumunu aç", () =>
+                RowMenu.Items.Add(Item("", L.T("rowOpenLoc"), () =>
                 {
                     try { Process.Start("explorer.exe", "/select,\"" + (File.Exists(one.S.Source) ? one.S.Source : one.S.Path) + "\""); } catch { }
                 }));
             RowMenu.Items.Add(new Separator());
-            RowMenu.Items.Add(Item("", sel.Count > 1 ? $"{sel.Count} sesi kaldır" : "Kaldır", () => Remove(sel)));
+            RowMenu.Items.Add(Item("", sel.Count > 1 ? L.F("removeN", sel.Count) : L.T("remove"), () => Remove(sel)));
         }
 
         void List_DoubleClick(object sender, MouseButtonEventArgs e)
@@ -491,7 +492,7 @@ namespace zSound
         async void Play(Sound s)
         {
             if (s == null) return;
-            if (!File.Exists(s.Path)) { SetStatus("Dosya bulunamadı: " + s.Name, true); return; }
+            if (!File.Exists(s.Path)) { SetStatus(L.F("notFound", s.Name), true); return; }
             last = s;
             await engine.Play(s);
             if (!tick.IsEnabled) tick.Start();
@@ -637,6 +638,8 @@ namespace zSound
         {
             loadingSettings = true;
             LoadDevices();
+            CboLang.ItemsSource = L.Languages.Select(x => new DeviceItem { Id = x.Code, Name = x.Name }).ToList();
+            CboLang.SelectedIndex = Array.FindIndex(L.Languages, x => x.Code == L.Current);
             CboLatency.SelectedIndex = Math.Max(0, Array.IndexOf(Latencies, S.LatencyMs));
             SettingsPanel.DataContext = S;
             BuildGlobalKeys();
@@ -655,6 +658,28 @@ namespace zSound
             SettingsPanel.AddHandler(Selector.SelectionChangedEvent, new SelectionChangedEventHandler((o, e) => changed(o, e)));
         }
 
+        void Lang_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (loadingSettings || CboLang.SelectedItem is not DeviceItem d || d.Id == L.Current) return;
+            S.Language = d.Id;
+            L.Set(d.Id);
+            SaveSoon();
+        }
+
+        /// dil değişti: koddan yazılan metinleri yenile (XAML'dekiler DynamicResource ile kendiliğinden değişir)
+        void OnLanguageChanged()
+        {
+            LoadDevices();
+            BuildGlobalKeys();
+            UpdatePttText();
+            UpdateApo();
+            BuildTrayMenu();
+            foreach (var vm in items) vm.Refresh();
+            if (editing != null) BtnSoundKey.Content = KeyLabel(editing.S.Key);
+            PlaySelText.Text = L.T(shownPlaying ? "stop" : "play");
+            TryText.Text = L.T(shownTrying ? "stop" : "editTry");
+        }
+
         void LoadDevices()
         {
             bool was = loadingSettings;
@@ -663,8 +688,8 @@ namespace zSound
             // önce bağı kopar, listeyi yenile, kayıtlı seçimi geri koy
             var mon = S.MonitorDevice ?? ""; var mic = S.MicDevice ?? "";
             SettingsPanel.DataContext = null;
-            CboMonitor.ItemsSource = Engine.Devices(DataFlow.Render, "Varsayılan hoparlör");
-            CboMic.ItemsSource = Engine.Devices(DataFlow.Capture, "Varsayılan mikrofon");
+            CboMonitor.ItemsSource = Engine.Devices(DataFlow.Render, L.T("devDefMon"));
+            CboMic.ItemsSource = Engine.Devices(DataFlow.Capture, L.T("devDefMic"));
             S.MonitorDevice = mon; S.MicDevice = mic;
             SettingsPanel.DataContext = S;
             // cihaz o an takılı değilse (ses hizmeti yeniden başlıyor vb.) seçim silinmesin, geri gelince yine seçilsin
@@ -691,13 +716,13 @@ namespace zSound
         {
             var defs = new (string label, string prop)[]
             {
-                ("Hepsini durdur", nameof(Settings.KeyStopAll)),
-                ("Duraklat / devam", nameof(Settings.KeyPauseAll)),
-                ("Rastgele ses", nameof(Settings.KeyRandom)),
-                ("Son sesi tekrar çal", nameof(Settings.KeyReplayLast)),
-                ("Mikrofona gönder aç/kapa", nameof(Settings.KeyToggleMic)),
-                ("Hoparlör aç/kapa", nameof(Settings.KeyToggleSpeakers)),
-                ("Kendi sesimi sustur / aç", nameof(Settings.KeyToggleMicPass)),
+                ("gkStopAll", nameof(Settings.KeyStopAll)),
+                ("gkPause", nameof(Settings.KeyPauseAll)),
+                ("gkRandom", nameof(Settings.KeyRandom)),
+                ("gkReplay", nameof(Settings.KeyReplayLast)),
+                ("gkMic", nameof(Settings.KeyToggleMic)),
+                ("gkSpk", nameof(Settings.KeyToggleSpeakers)),
+                ("gkMute", nameof(Settings.KeyToggleMicPass)),
             };
             GlobalKeys.Children.Clear();
             for (int i = 0; i < defs.Length; i++)
@@ -706,7 +731,7 @@ namespace zSound
                 var pi = typeof(Settings).GetProperty(prop);
                 if (i > 0) GlobalKeys.Children.Add(new Border { Style = (Style)FindResource("Div") });
                 var row = new DockPanel { Style = (Style)FindResource("SetRow") };
-                row.Children.Add(new TextBlock { Text = label, Style = (Style)FindResource("Label") });
+                row.Children.Add(new TextBlock { Text = L.T(label), Style = (Style)FindResource("Label") });
                 var b = new Button { Style = (Style)FindResource("KeyBtn"), Content = KeyLabel((Hotkey)pi.GetValue(S)) };
                 DockPanel.SetDock(b, Dock.Right);
                 b.Click += (_, _) => Capture(b, h => pi.SetValue(S, h), () => KeyLabel((Hotkey)pi.GetValue(S)));
@@ -716,12 +741,12 @@ namespace zSound
             }
         }
 
-        static string KeyLabel(Hotkey h) => h == null || h.IsEmpty ? "Ata" : h.ToString();
+        static string KeyLabel(Hotkey h) => h == null || h.IsEmpty ? L.T("keyAssign") : h.ToString();
 
         /// buton "Bir tuşa bas…" olur; Esc iptal, Backspace/Delete temizler
         void Capture(Button b, Action<Hotkey> set, Func<string> label)
         {
-            b.Content = "Bir tuşa bas…";
+            b.Content = L.T("keyPress");
             b.Foreground = (Brush)FindResource("Accent");
             keys.EnableMouse(true);
             keys.Capture = h =>
@@ -756,11 +781,11 @@ namespace zSound
             keys.EnableMouse(any);
         }
 
-        void UpdatePttText() => BtnPtt.Content = S.PushToTalkVk > 0 ? KeyNames.Name(S.PushToTalkVk) : "Kapalı";
+        void UpdatePttText() => BtnPtt.Content = S.PushToTalkVk > 0 ? KeyNames.Name(S.PushToTalkVk) : L.T("off");
 
         void Ptt_Click(object sender, RoutedEventArgs e)
         {
-            Capture(BtnPtt, h => S.PushToTalkVk = h?.Vk ?? 0, () => S.PushToTalkVk > 0 ? KeyNames.Name(S.PushToTalkVk) : "Kapalı");
+            Capture(BtnPtt, h => S.PushToTalkVk = h?.Vk ?? 0, () => S.PushToTalkVk > 0 ? KeyNames.Name(S.PushToTalkVk) : L.T("off"));
             // PTT tuşu kısayol sayılmaz, çakışma temizliği yapmayalım
         }
 
@@ -819,12 +844,12 @@ namespace zSound
 
         void UpdateStatus()
         {
-            if (!apoHere) SetStatus("Sadece hoparlör", false, "Mikrofon eklentisi kurulu değil — Ayarlar → Mikrofon eklentisi → Kur");
-            else if (apoOld) SetStatus("Güncelle", true, "Mikrofon eklentisi eski — Ayarlar → Mikrofon eklentisi → Güncelle");
-            else if (engine.LastError != null) SetStatus("Hata", true, engine.LastError);
-            else if (engine.MicMuted) SetStatus("Sesin kapalı", true, "Kendi sesin susturuldu (kısayolla tekrar aç)");
-            else if (engine.Plays.Count > 0) SetStatus("Çalıyor", false, micName);
-            else SetStatus("Hazır", false, micName + (engine.MicReaders > 0 ? " · etkin" : " · şu an mikrofonu kullanan uygulama yok"));
+            if (!apoHere) SetStatus(L.T("stSpkOnly"), false, L.T("stSpkOnlyTip"));
+            else if (apoOld) SetStatus(L.T("stUpdate"), true, L.T("stUpdateTip"));
+            else if (engine.LastError != null) SetStatus(L.T("stError"), true, engine.LastError);
+            else if (engine.MicMuted) SetStatus(L.T("stMuted"), true, L.T("stMutedTip"));
+            else if (engine.Plays.Count > 0) SetStatus(L.T("stPlaying"), false, micName);
+            else SetStatus(L.T("statusReady"), false, micName + (engine.MicReaders > 0 ? L.T("stActive") : L.T("stIdle")));
         }
 
         // ───────────── mikrofon eklentisi ─────────────
@@ -838,7 +863,7 @@ namespace zSound
             (micId, micName) = Engine.ResolveMic(S.MicDevice);
             apoHere = micId != null && MicApo.IsInstalledOn(micId);
             apoOld = apoHere && MicApo.NeedsUpdate;
-            BtnApoInstall.Content = apoOld ? "Güncelle" : apoHere ? "Yeniden kur" : "Kur";
+            BtnApoInstall.Content = L.T(apoOld ? "apoUpdate" : apoHere ? "apoReinstall" : "apoInstall");
             BtnApoRemove.Visibility = apoHere || MicApo.AnyInstalled ? Visibility.Visible : Visibility.Collapsed;
             BtnApoInstall.IsEnabled = BtnApoRemove.IsEnabled = !apoBusy && micId != null;
             UpdateApoText();
@@ -848,13 +873,12 @@ namespace zSound
         void UpdateApoText()
         {
             if (apoBusy || SettingsView.Visibility != Visibility.Visible) return;
-            if (micId == null) ApoText.Text = "Mikrofon bulunamadı.";
+            if (micId == null) ApoText.Text = L.T("apoNoMic");
             else if (!apoHere)
-                ApoText.Text = (BtnApoRemove.Visibility == Visibility.Visible ? "Başka bir mikrofonda kurulu. " : "") +
-                               "Kurulunca sesler doğrudan \"" + micName + "\" üzerinden gider. Yönetici izni ister.";
-            else if (apoOld) ApoText.Text = "Kurulu eklenti eski sürüm, sesler mikrofona gitmez. \"Güncelle\"ye bas.";
-            else if (engine.MicReaders > 0) ApoText.Text = "Etkin — sesler \"" + micName + "\" üzerinden gidiyor.";
-            else ApoText.Text = "Kurulu. Mikrofonu bir uygulama (Discord, oyun, Windows ses ayarları…) açınca etkinleşir.";
+                ApoText.Text = (BtnApoRemove.Visibility == Visibility.Visible ? L.T("apoElsewhere") : "") + L.F("apoWillRoute", micName);
+            else if (apoOld) ApoText.Text = L.T("apoOld");
+            else if (engine.MicReaders > 0) ApoText.Text = L.F("apoActive", micName);
+            else ApoText.Text = L.T("apoIdle");
         }
 
         void CboMic_Changed(object sender, SelectionChangedEventArgs e)
@@ -865,27 +889,23 @@ namespace zSound
         void ApoInstall_Click(object sender, RoutedEventArgs e)
         {
             if (micId == null) return;
-            if (MessageBox.Show(this, "zSound eklentisi \"" + micName + "\" mikrofonuna kurulacak.\n\n" +
-                    "Yönetici izni istenecek ve Windows ses hizmeti yeniden başlatılacak: tüm sesler birkaç saniye kesilir, " +
-                    "Discord mikrofonu kendiliğinden yeniden bağlanır.\n\n" +
-                    "Kurulumdan sonra mikrofona 3 saniyelik bir test sesi gönderilip ölçülür; ses geçmezse her şey otomatik geri alınır.\n\nDevam edilsin mi?",
+            if (MessageBox.Show(this, L.F("apoConfirmInstall", micName),
                     "zSound", MessageBoxButton.OKCancel, MessageBoxImage.Information) != MessageBoxResult.OK) return;
-            RunApo("install", "Kuruluyor…");
+            RunApo("install", L.T("apoInstalling"));
         }
 
         void ApoRemove_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show(this, "Eklenti tüm mikrofonlardan kaldırılacak ve değiştirilen her şey eski haline dönecek.\n\n" +
-                    "Yönetici izni istenecek ve Windows ses hizmeti yeniden başlatılacak (sesler birkaç saniye kesilir).\n\nDevam edilsin mi?",
+            if (MessageBox.Show(this, L.T("apoConfirmRemove"),
                     "zSound", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
-            RunApo("uninstall", "Kaldırılıyor…");
+            RunApo("uninstall", L.T("apoRemoving"));
         }
 
         async void RunApo(string verb, string busyText)
         {
             apoBusy = true;
             BtnApoInstall.IsEnabled = BtnApoRemove.IsEnabled = false;
-            ApoText.Text = busyText + " (ses hizmeti yeniden başlıyor)";
+            ApoText.Text = busyText + L.T("apoRestarting");
             var err = await MicApo.RunElevated(verb, micId);
             // ses hizmeti yeniden başladı: hoparlör çıkışını tazele
             await Task.Delay(1500);
@@ -920,7 +940,7 @@ namespace zSound
             EditView.ScrollToTop();
 
             Wave.Load(null, 1, 0, 0);
-            WaveLoading.Text = "Dalga formu yükleniyor…";
+            WaveLoading.Text = L.T("editLoading");
             WaveLoading.Visibility = Visibility.Visible;
             TrimStartText.Text = TrimEndText.Text = TrimLenText.Text = "";
             int token = ++waveToken;
@@ -942,7 +962,7 @@ namespace zSound
             }
             catch (Exception ex)
             {
-                if (token == waveToken) WaveLoading.Text = "Okunamadı: " + ex.Message;
+                if (token == waveToken) WaveLoading.Text = L.F("editReadFail", ex.Message);
             }
         }
 
@@ -1012,14 +1032,14 @@ namespace zSound
             var s = editing.S;
             preview?.Stop();
             preview = null;
-            if (!File.Exists(s.Path)) { SetStatus("Dosya bulunamadı: " + s.Name, true); return; }
+            if (!File.Exists(s.Path)) { SetStatus(L.F("notFound", s.Name), true); return; }
             int token = ++previewToken;
             previewStarting = true;
             UpdateEditButtons(shownTrying);
             var pb = await engine.Preview(s, from, to);
             if (token == previewToken) previewStarting = false;
             if (token != previewToken || editing?.S != s) { pb?.Stop(); return; } // bu arada durduruldu / başka ses açıldı
-            if (pb == null) { SetStatus(engine.LastError ?? "Çalınamadı", true); UpdateEditButtons(shownTrying); return; }
+            if (pb == null) { SetStatus(engine.LastError ?? L.T("playFail"), true); UpdateEditButtons(shownTrying); return; }
             preview = pb;
             if (!tick.IsEnabled) tick.Start();
         }
@@ -1064,13 +1084,13 @@ namespace zSound
             {
                 shownPlaying = playing;
                 PlaySelIcon.Text = playing ? "\uE71A" : "\uE768";
-                PlaySelText.Text = playing ? "Durdur" : "Çal";
+                PlaySelText.Text = L.T(playing ? "stop" : "play");
             }
             if (trying != shownTrying)
             {
                 shownTrying = trying;
                 TryIcon.Text = trying ? "\uE71A" : "\uE768";
-                TryText.Text = trying ? "Durdur" : "Dene";
+                TryText.Text = L.T(trying ? "stop" : "editTry");
             }
         }
 
@@ -1126,14 +1146,19 @@ namespace zSound
         void InitTray()
         {
             tray = new Tray("zSound");
-            var menu = new ContextMenu();
-            menu.Items.Add(Item("", "Göster", ShowFromTray));
-            menu.Items.Add(Item("", "Hepsini durdur", () => engine.StopAll()));
-            menu.Items.Add(new Separator());
-            menu.Items.Add(Item("", "Çıkış", Exit));
-            tray.Menu = menu;
+            BuildTrayMenu();
             tray.Click += ShowFromTray;
             tray.Command += OnCommand;
+        }
+
+        void BuildTrayMenu()
+        {
+            var menu = new ContextMenu();
+            menu.Items.Add(Item("", L.T("trayShow"), ShowFromTray));
+            menu.Items.Add(Item("", L.T("tipStopAll"), () => engine.StopAll()));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(Item("", L.T("trayExit"), Exit));
+            tray.Menu = menu;
         }
 
         void OnCommand(string cmd)

@@ -173,7 +173,7 @@ namespace zSound.Audio
                     try { var d = en.GetDevice(s.MonitorDevice); if (d.State == DeviceState.Active) md = d; } catch { }
                 }
                 try { md ??= en.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia); } catch { }
-                if (md != null) try { monitor = new Output(md, s.LatencyMs); } catch (Exception e) { LastError = "Hoparlör: " + e.Message; }
+                if (md != null) try { monitor = new Output(md, s.LatencyMs); } catch (Exception e) { LastError = L.F("engSpeaker", e.Message); }
             }
             catch (Exception e) { LastError = e.Message; }
         }
@@ -206,7 +206,7 @@ namespace zSound.Audio
 
             bool toMic = snd.Target != OutputTarget.SpeakersOnly;
             bool toMon = monitor != null && snd.Target != OutputTarget.MicOnly;
-            if (!toMic && !toMon) { LastError = "Çıkış cihazı yok"; Changed?.Invoke(); return null; }
+            if (!toMic && !toMon) { LastError = L.T("engNoOutput"); Changed?.Invoke(); return null; }
 
             var pb = new Playback { Sound = snd };
             try
@@ -221,7 +221,7 @@ namespace zSound.Audio
             catch (Exception e)
             {
                 pb.A?.Dispose(); pb.B?.Dispose();
-                LastError = "Açılamadı: " + System.IO.Path.GetFileName(snd.Path) + " (" + e.Message + ")";
+                LastError = L.F("engOpenFail", System.IO.Path.GetFileName(snd.Path), e.Message);
                 Changed?.Invoke();
                 return null;
             }
@@ -237,7 +237,7 @@ namespace zSound.Audio
         /// düzenleyicide dinleme: sadece hoparlörden, mikrofona gitmez; from..to kırpmadan bağımsız
         public async Task<Playback> Preview(Sound snd, double from, double to)
         {
-            if (monitor == null) { LastError = "Hoparlör bulunamadı"; Changed?.Invoke(); return null; }
+            if (monitor == null) { LastError = L.T("engNoSpeaker"); Changed?.Invoke(); return null; }
             var pb = new Playback { Sound = snd, Preview = true };
             try
             {
@@ -245,7 +245,7 @@ namespace zSound.Audio
             }
             catch (Exception e)
             {
-                LastError = "Açılamadı: " + System.IO.Path.GetFileName(snd.Path) + " (" + e.Message + ")";
+                LastError = L.F("engOpenFail", System.IO.Path.GetFileName(snd.Path), e.Message);
                 Changed?.Invoke();
                 return null;
             }

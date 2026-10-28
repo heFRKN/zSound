@@ -33,7 +33,7 @@ public static class MicProbe
         float[] baseline;
         lock (gate) { baseline = samples.ToArray(); samples.Clear(); }
         if (error != null) throw error;
-        if (baseline.Length < 12000) throw new Exception("Mikrofondan veri alınamadı.");
+        if (baseline.Length < 12000) throw new Exception(L.T("probeNoData"));
         using var bus = new MicBus();
         var path = Path.Combine(Path.GetTempPath(), "zsound-probe-" + Guid.NewGuid().ToString("N") + ".wav");
         try
@@ -58,14 +58,14 @@ public static class MicProbe
             var report = $"device={dev.FriendlyName}; frames={received.Length}; readers={bus.Readers}; tone997={a:F6}; tone1499={b:F6}; baseline997={Tone(baseline, 997):F6}; baseline1499={Tone(baseline, 1499):F6}";
             if (error != null) throw error;
             if (bus.Readers < 1 || received.Length < 48000 || a < 0.025 || b < 0.025 || a < Tone(baseline, 997) * 4 || b < Tone(baseline, 1499) * 4)
-                throw new Exception("Mikrofon ses aktarım testi başarısız: " + report);
+                throw new Exception(L.F("probeFail", report));
             bus.Mixer.StopAll();
             bus.Wake();
             Thread.Sleep(500);
             lock (gate) samples.Clear();
             Thread.Sleep(600);
             lock (gate)
-                if (samples.Count < 12000) throw new Exception("Test sonrası mikrofon akışı durdu.");
+                if (samples.Count < 12000) throw new Exception(L.T("probeStopped"));
             return "PASS " + report;
         }
         finally

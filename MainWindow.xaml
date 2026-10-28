@@ -45,12 +45,12 @@
                 WindowChrome.IsHitTestVisibleInChrome="True" Cursor="Hand" MouseLeftButtonUp="StatusPill_Click">
           <StackPanel Orientation="Horizontal">
             <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="#4CAF7A" Margin="0,0,6,0" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StatusText" Text="Hazır" FontSize="11" Foreground="{StaticResource TextDim}"/>
+            <TextBlock x:Name="StatusText" Text="{DynamicResource L.statusReady}" FontSize="11" Foreground="{StaticResource TextDim}"/>
           </StackPanel>
         </Border>
       </StackPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
-        <Button x:Name="BtnSettings" Style="{StaticResource IconBtn}" Content="&#xE713;" ToolTip="Ayarlar" Click="BtnSettings_Click"/>
+        <Button x:Name="BtnSettings" Style="{StaticResource IconBtn}" Content="&#xE713;" ToolTip="{DynamicResource L.tipSettings}" Click="BtnSettings_Click"/>
         <Button Style="{StaticResource IconBtn}" Content="&#xE921;" FontSize="10" Click="Min_Click"/>
         <Button Style="{StaticResource CloseBtn}" Content="&#xE8BB;" FontSize="10" Click="Close_Click"/>
       </StackPanel>
@@ -71,9 +71,9 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
-          <TextBox x:Name="Search" Style="{StaticResource GlassBox}" Tag="Ara…  (Ctrl+F)" TextChanged="Search_TextChanged" PreviewKeyDown="Search_PreviewKeyDown"/>
-          <ToggleButton x:Name="FavFilter" Grid.Column="1" Style="{StaticResource IconToggle}" Content="&#xE735;" Margin="6,0,0,0" ToolTip="Sadece favoriler" Click="FavFilter_Click"/>
-          <Button Grid.Column="2" Style="{StaticResource AccentBtn}" Margin="6,0,0,0" Padding="0" Width="34" Height="34" ToolTip="Ses ekle" Click="Add_Click">
+          <TextBox x:Name="Search" Style="{StaticResource GlassBox}" Tag="{DynamicResource L.search}" TextChanged="Search_TextChanged" PreviewKeyDown="Search_PreviewKeyDown"/>
+          <ToggleButton x:Name="FavFilter" Grid.Column="1" Style="{StaticResource IconToggle}" Content="&#xE735;" Margin="6,0,0,0" ToolTip="{DynamicResource L.tipFavsOnly}" Click="FavFilter_Click"/>
+          <Button Grid.Column="2" Style="{StaticResource AccentBtn}" Margin="6,0,0,0" Padding="0" Width="34" Height="34" ToolTip="{DynamicResource L.tipAdd}" Click="Add_Click">
             <TextBlock Text="&#xE710;" FontFamily="{StaticResource Icons}" FontSize="13"/>
           </Button>
         </Grid>
@@ -117,7 +117,7 @@
         <!-- boş durum -->
         <StackPanel x:Name="Empty" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
           <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource Icons}" FontSize="30" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Center"/>
-          <TextBlock Text="Ses veya video dosyalarını buraya sürükle" Foreground="{StaticResource TextDim}" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+          <TextBlock Text="{DynamicResource L.emptyTitle}" Foreground="{StaticResource TextDim}" Margin="0,12,0,4" HorizontalAlignment="Center"/>
           <TextBlock Text="mp3 · wav · ogg · flac · m4a · mp4 · mkv · webm · mov" FontSize="11" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Center"/>
         </StackPanel>
       </Grid>
@@ -126,101 +126,109 @@
       <ScrollViewer x:Name="SettingsView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="12,0,12,12">
         <StackPanel x:Name="SettingsPanel">
 
-          <TextBlock Text="CİHAZLAR" Style="{StaticResource Section}" Margin="4,2,0,8"/>
+          <Border Style="{StaticResource Card}" Margin="0,2,0,0">
+            <DockPanel Style="{StaticResource SetRow}">
+              <TextBlock Text="&#xE774;" FontFamily="{StaticResource Icons}" FontSize="14" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBlock Text="Language / Dil" Style="{StaticResource Label}"/>
+              <ComboBox x:Name="CboLang" DockPanel.Dock="Right" Width="140" DisplayMemberPath="Name" SelectionChanged="Lang_Changed"/>
+            </DockPanel>
+          </Border>
+
+          <TextBlock Text="{DynamicResource L.secDevices}" Style="{StaticResource Section}" Margin="4,18,0,8"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <StackPanel Margin="14,8">
-                <TextBlock Text="Senin duyduğun (hoparlör / kulaklık)" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.devMonitor}" Style="{StaticResource Label}"/>
                 <ComboBox x:Name="CboMonitor" Margin="0,8,0,0" SelectedValuePath="Id" DisplayMemberPath="Name" Tag="rebuild" SelectedValue="{Binding MonitorDevice}"/>
               </StackPanel>
               <Border Style="{StaticResource Div}"/>
               <StackPanel Margin="14,8">
-                <TextBlock Text="Gerçek mikrofonun" Style="{StaticResource Label}"/>
-                <TextBlock Text="Sesler doğrudan bu mikrofondan çıkar; Discord'da ve oyunlarda bu mikrofon seçili kalsın." Style="{StaticResource Hint}" Margin="0,2,0,0"/>
+                <TextBlock Text="{DynamicResource L.devMic}" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.devMicHint}" Style="{StaticResource Hint}" Margin="0,2,0,0"/>
                 <ComboBox x:Name="CboMic" Margin="0,8,0,0" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding MicDevice}" SelectionChanged="CboMic_Changed"/>
               </StackPanel>
               <DockPanel Style="{StaticResource SetRow}">
-                <Button Content="Cihazları yenile" Style="{StaticResource GlassBtn}" Click="Refresh_Click"/>
+                <Button Content="{DynamicResource L.devRefresh}" Style="{StaticResource GlassBtn}" Click="Refresh_Click"/>
               </DockPanel>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="MİKROFON" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secMic}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <StackPanel Margin="14,10">
                 <DockPanel LastChildFill="False">
-                  <TextBlock Text="Mikrofon eklentisi" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.apoTitle}" Style="{StaticResource Label}"/>
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button x:Name="BtnApoRemove" Content="Kaldır" Style="{StaticResource GlassBtn}" Margin="0,0,6,0" Click="ApoRemove_Click"
-                            ToolTip="Eklentiyi tüm mikrofonlardan kaldırır, her şeyi eski haline döndürür"/>
-                    <Button x:Name="BtnApoInstall" Content="Kur" Style="{StaticResource AccentBtn}" Click="ApoInstall_Click"/>
+                    <Button x:Name="BtnApoRemove" Content="{DynamicResource L.remove}" Style="{StaticResource GlassBtn}" Margin="0,0,6,0" Click="ApoRemove_Click"
+                            ToolTip="{DynamicResource L.apoRemoveTip}"/>
+                    <Button x:Name="BtnApoInstall" Content="{DynamicResource L.apoInstall}" Style="{StaticResource AccentBtn}" Click="ApoInstall_Click"/>
                   </StackPanel>
                 </DockPanel>
                 <TextBlock x:Name="ApoText" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
               </StackPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Mikrofon kazancı" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.micGain}" Style="{StaticResource Label}"/>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding MicGain, Converter={StaticResource Pct}}"/>
                 <Slider DockPanel.Dock="Right" Width="150" Minimum="0" Maximum="3" Value="{Binding MicGain}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Ses çalarken mikrofonu kıs" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Ducking — ses net duyulsun" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.duckTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.duckHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding DuckMic}"/>
               </DockPanel>
               <DockPanel Style="{StaticResource SetRow}" Margin="14,0,14,9">
-                <TextBlock Text="Kısma seviyesi" Style="{StaticResource Hint}" VerticalAlignment="Center"/>
+                <TextBlock Text="{DynamicResource L.duckLevel}" Style="{StaticResource Hint}" VerticalAlignment="Center"/>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding DuckLevel, Converter={StaticResource Pct}}"/>
                 <Slider DockPanel.Dock="Right" Width="150" Minimum="0" Maximum="1" Value="{Binding DuckLevel}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Bas-konuş tuşu" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Ses çalarken bu tuşu otomatik basılı tutar" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.pttTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.pttHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <Button x:Name="BtnPtt" DockPanel.Dock="Right" Style="{StaticResource KeyBtn}" Click="Ptt_Click" MouseRightButtonUp="Ptt_Clear"/>
               </DockPanel>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="ÇALMA" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secPlay}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Aynı anda basınca" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.ovTitle}" Style="{StaticResource Label}"/>
                 <ComboBox x:Name="CboOverlap" DockPanel.Dock="Right" Width="170" SelectedIndex="{Binding Overlap, Converter={x:Static local:EnumIdx.I}}">
-                  <ComboBoxItem Content="Üst üste çal"/>
-                  <ComboBoxItem Content="Aynı sesi baştan al"/>
-                  <ComboBoxItem Content="Diğerlerini durdur"/>
+                  <ComboBoxItem Content="{DynamicResource L.ovOverlap}"/>
+                  <ComboBoxItem Content="{DynamicResource L.ovRestart}"/>
+                  <ComboBoxItem Content="{DynamicResource L.ovStopOthers}"/>
                 </ComboBox>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Tekrar basınca durdur" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Çalan sesin tuşu ikinci kez basılınca susar" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.againTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.againHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding PressAgainStops}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Ses yüksekliğini eşitle" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Tüm sesler aynı yükseklikte çalar" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.normTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.normHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding Normalize}" Click="Normalize_Click"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Mikrofon güçlendirme" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Karşı taraf daha yüksek duyar" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.boostTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.boostHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding Boost, Converter={StaticResource Pct}}"/>
                 <Slider DockPanel.Dock="Right" Width="150" Minimum="1" Maximum="4" Value="{Binding Boost}"/>
@@ -229,15 +237,15 @@
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
                   <TextBlock Text="Limiter" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Patlamayı/cızırtıyı engeller" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.limHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding Limiter}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Gecikme" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Düşük = hızlı tepki, cızırtı olursa yükselt" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.latTitle}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.latHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <ComboBox x:Name="CboLatency" DockPanel.Dock="Right" Width="110" Tag="rebuild" SelectionChanged="Latency_Changed">
                   <ComboBoxItem Content="20 ms"/>
@@ -250,45 +258,45 @@
             </StackPanel>
           </Border>
 
-          <TextBlock Text="GENEL KISAYOLLAR" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secGlobalKeys}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel x:Name="GlobalKeys" Margin="0,4"/>
           </Border>
-          <TextBlock Text="Tıkla → tuşa bas, bırak. Kombinasyon için birini basılı tutup diğerine bas (Num1+Num2). Sağ tık siler. Fare yan tuşları da olur." Style="{StaticResource Hint}" Margin="6,6,0,0"/>
+          <TextBlock Text="{DynamicResource L.keysHint}" Style="{StaticResource Hint}" Margin="6,6,0,0"/>
 
-          <TextBlock Text="GENEL" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secGeneral}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Kapatınca tepsiye küçült" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.genTray}" Style="{StaticResource Label}"/>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding MinimizeToTray}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Windows ile başlat" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.genStartup}" Style="{StaticResource Label}"/>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding StartWithWindows}" Click="Autostart_Click"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Küçültülmüş başlat" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.genStartMin}" Style="{StaticResource Label}"/>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding StartMinimized}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="GPU ile çiz" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Kapalı: VRAM 0. Açık: arayüz gezinirken daha az CPU. Yeniden başlatınca geçerli." Style="{StaticResource Hint}" MaxWidth="260" HorizontalAlignment="Left"/>
+                  <TextBlock Text="{DynamicResource L.genGpu}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.genGpuHint}" Style="{StaticResource Hint}" MaxWidth="260" HorizontalAlignment="Left"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding GpuRender}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <Button Content="Ayar klasörünü aç" Style="{StaticResource GlassBtn}" Click="OpenCfg_Click"/>
+                <Button Content="{DynamicResource L.genOpenCfg}" Style="{StaticResource GlassBtn}" Click="OpenCfg_Click"/>
                 <TextBlock x:Name="MemText" DockPanel.Dock="Right" Style="{StaticResource Hint}" VerticalAlignment="Center"/>
               </DockPanel>
             </StackPanel>
           </Border>
-          <TextBlock Text="zSound 1.2" Style="{StaticResource Hint}" HorizontalAlignment="Center" Margin="0,16,0,4" Foreground="{StaticResource TextFaint}"/>
+          <TextBlock Text="zSound 1.3" Style="{StaticResource Hint}" HorizontalAlignment="Center" Margin="0,16,0,4" Foreground="{StaticResource TextFaint}"/>
         </StackPanel>
       </ScrollViewer>
 
@@ -296,50 +304,50 @@
       <ScrollViewer x:Name="EditView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="12,0,12,12">
         <StackPanel x:Name="EditPanel">
           <DockPanel Margin="0,2,0,10">
-            <Button Style="{StaticResource IconBtn}" Content="&#xE72B;" Click="EditBack_Click" ToolTip="Geri (Esc)"/>
-            <Button DockPanel.Dock="Right" Style="{StaticResource GlassBtn}" Click="EditPreview_Click" ToolTip="Ayarlandığı yere çalar (mikrofon dahil)">
+            <Button Style="{StaticResource IconBtn}" Content="&#xE72B;" Click="EditBack_Click" ToolTip="{DynamicResource L.editBackTip}"/>
+            <Button DockPanel.Dock="Right" Style="{StaticResource GlassBtn}" Click="EditPreview_Click" ToolTip="{DynamicResource L.editTryTip}">
               <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="TryIcon" Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
-                <TextBlock x:Name="TryText" Text="Dene"/>
+                <TextBlock x:Name="TryText" Text="{DynamicResource L.editTry}"/>
               </StackPanel>
             </Button>
-            <TextBlock Text="Kırp ve düzenle" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+            <TextBlock Text="{DynamicResource L.editTitle}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
           </DockPanel>
 
           <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
             <StackPanel>
               <Grid Height="150">
                 <local:Waveform x:Name="Wave"/>
-                <TextBlock x:Name="WaveLoading" Text="Dalga formu yükleniyor…" Foreground="{StaticResource TextFaint}" FontSize="11.5"
+                <TextBlock x:Name="WaveLoading" Text="{DynamicResource L.editLoading}" Foreground="{StaticResource TextFaint}" FontSize="11.5"
                            HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
               </Grid>
               <DockPanel Margin="0,10,0,0">
                 <StackPanel Orientation="Horizontal">
-                  <Button x:Name="BtnPlaySel" Style="{StaticResource AccentBtn}" Padding="12,6" MinWidth="92" Click="PlaySel_Click" ToolTip="Seçili kısmı dinle (Boşluk)">
+                  <Button x:Name="BtnPlaySel" Style="{StaticResource AccentBtn}" Padding="12,6" MinWidth="92" Click="PlaySel_Click" ToolTip="{DynamicResource L.editPlayTip}">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock x:Name="PlaySelIcon" Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
-                      <TextBlock x:Name="PlaySelText" Text="Çal"/>
+                      <TextBlock x:Name="PlaySelText" Text="{DynamicResource L.play}"/>
                     </StackPanel>
                   </Button>
-                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="s" Click="Audition_Click" ToolTip="Kesilen başlangıcı dinle (ilk 1.5 sn)">
+                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="s" Click="Audition_Click" ToolTip="{DynamicResource L.editHeadTip}">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="&#xE892;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="Başı"/>
+                      <TextBlock Text="{DynamicResource L.editHead}"/>
                     </StackPanel>
                   </Button>
-                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="e" Click="Audition_Click" ToolTip="Kesilen sonu dinle (son 1.5 sn)">
+                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="e" Click="Audition_Click" ToolTip="{DynamicResource L.editTailTip}">
                     <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Sonu"/>
+                      <TextBlock Text="{DynamicResource L.editTail}"/>
                       <TextBlock Text="&#xE893;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center" Margin="6,0,0,0"/>
                     </StackPanel>
                   </Button>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                  <Button x:Name="BtnZoomOut" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71F;" Click="ZoomOut_Click" ToolTip="Uzaklaş"/>
+                  <Button x:Name="BtnZoomOut" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71F;" Click="ZoomOut_Click" ToolTip="{DynamicResource L.zoomOut}"/>
                   <TextBlock x:Name="ZoomText" Text="1×" FontSize="11.5" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" MinWidth="30" TextAlignment="Center"/>
-                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE8A3;" Click="ZoomIn_Click" ToolTip="Yakınlaş (tekerlek)"/>
-                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71E;" Click="ZoomSel_Click" ToolTip="Seçime yakınlaş"/>
-                  <Button x:Name="BtnZoomFit" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE740;" Click="ZoomFit_Click" ToolTip="Tamamını göster"/>
+                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE8A3;" Click="ZoomIn_Click" ToolTip="{DynamicResource L.zoomIn}"/>
+                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71E;" Click="ZoomSel_Click" ToolTip="{DynamicResource L.zoomSel}"/>
+                  <Button x:Name="BtnZoomFit" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE740;" Click="ZoomFit_Click" ToolTip="{DynamicResource L.zoomFit}"/>
                 </StackPanel>
               </DockPanel>
               <Border Style="{StaticResource Div}" Margin="0,10,0,0"/>
@@ -350,119 +358,119 @@
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="s-" Click="Nudge_Click" ToolTip="Başlangıç −0.1 sn (Shift: 0.01 sn)"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="s-" Click="Nudge_Click" ToolTip="{DynamicResource L.nudgeStartMinus}"/>
                   <StackPanel Margin="2,0" VerticalAlignment="Center">
-                    <TextBlock Text="BAŞLANGIÇ" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
+                    <TextBlock Text="{DynamicResource L.trimStart}" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
                     <TextBlock x:Name="TrimStartText" FontSize="12.5"/>
                   </StackPanel>
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="s+" Click="Nudge_Click" ToolTip="Başlangıç +0.1 sn (Shift: 0.01 sn)"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="s+" Click="Nudge_Click" ToolTip="{DynamicResource L.nudgeStartPlus}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <TextBlock Text="UZUNLUK" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{DynamicResource L.trimLen}" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Center"/>
                   <TextBlock x:Name="TrimLenText" FontSize="12.5" Foreground="{StaticResource TextDim}" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="e-" Click="Nudge_Click" ToolTip="Bitiş −0.1 sn (Shift: 0.01 sn)"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="e-" Click="Nudge_Click" ToolTip="{DynamicResource L.nudgeEndMinus}"/>
                   <StackPanel Margin="2,0" VerticalAlignment="Center">
-                    <TextBlock Text="BİTİŞ" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{DynamicResource L.trimEnd}" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Right"/>
                     <TextBlock x:Name="TrimEndText" FontSize="12.5" HorizontalAlignment="Right"/>
                   </StackPanel>
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="e+" Click="Nudge_Click" ToolTip="Bitiş +0.1 sn (Shift: 0.01 sn)"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="e+" Click="Nudge_Click" ToolTip="{DynamicResource L.nudgeEndPlus}"/>
                 </StackPanel>
               </Grid>
               <DockPanel Margin="0,10,0,0" LastChildFill="False">
                 <CheckBox x:Name="AuditionSwitch" Style="{StaticResource Switch}" VerticalAlignment="Center" Click="AuditionSwitch_Click"/>
-                <TextBlock Text="Bırakınca dinle" FontSize="12" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Margin="8,0,0,0"
-                           ToolTip="Kenarı bırakınca kestiğin yeri kısaca çalar"/>
-                <Button DockPanel.Dock="Right" Content="Tamamını al" Style="{StaticResource GlassBtn}" Padding="10,5" Click="TrimReset_Click"/>
+                <TextBlock Text="{DynamicResource L.audTitle}" FontSize="12" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Margin="8,0,0,0"
+                           ToolTip="{DynamicResource L.audTip}"/>
+                <Button DockPanel.Dock="Right" Content="{DynamicResource L.trimAll}" Style="{StaticResource GlassBtn}" Padding="10,5" Click="TrimReset_Click"/>
               </DockPanel>
               <TextBlock Style="{StaticResource Hint}" Foreground="{StaticResource TextFaint}" TextWrapping="Wrap" Margin="0,8,0,0"
-                         Text="Kenarları sürükle · tekerlek: yakınlaş · Shift+tekerlek ya da sağ tık sürükle: kaydır · üstteki cetvele tıkla: oradan dinle · Boşluk: çal/durdur"/>
+                         Text="{DynamicResource L.editHint}"/>
             </StackPanel>
           </Border>
 
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <StackPanel Margin="14,10">
-                <TextBlock Text="İsim" Style="{StaticResource Hint}" Margin="0,0,0,6"/>
+                <TextBlock Text="{DynamicResource L.editName}" Style="{StaticResource Hint}" Margin="0,0,0,6"/>
                 <TextBox Style="{StaticResource GlassBox}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock x:Name="EditPath" Style="{StaticResource Hint}" Foreground="{StaticResource TextFaint}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
               </StackPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Kısayol" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.editKey}" Style="{StaticResource Label}"/>
                 <Button x:Name="BtnSoundKey" DockPanel.Dock="Right" Style="{StaticResource KeyBtn}" Click="SoundKey_Click" MouseRightButtonUp="SoundKey_Clear"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Nereye çalsın" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.editTarget}" Style="{StaticResource Label}"/>
                 <ComboBox DockPanel.Dock="Right" Width="170" SelectedIndex="{Binding Target, Converter={x:Static local:EnumIdx.I}}">
-                  <ComboBoxItem Content="Mikrofon + hoparlör"/>
-                  <ComboBoxItem Content="Sadece mikrofon"/>
-                  <ComboBoxItem Content="Sadece ben duyayım"/>
+                  <ComboBoxItem Content="{DynamicResource L.tgtBoth}"/>
+                  <ComboBoxItem Content="{DynamicResource L.tgtMic}"/>
+                  <ComboBoxItem Content="{DynamicResource L.tgtMe}"/>
                 </ComboBox>
               </DockPanel>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="SES" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secSound}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Ses seviyesi" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.volume}" Style="{StaticResource Label}"/>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding Volume, Converter={StaticResource Pct}}"/>
                 <Slider DockPanel.Dock="Right" Width="170" Minimum="0" Maximum="2" Value="{Binding Volume}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Hız / perde" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Sincap ↔ derin ses" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.speed}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.speedHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding Speed, Converter={StaticResource Pct}}"/>
                 <Slider DockPanel.Dock="Right" Width="170" Minimum="0.5" Maximum="2" Value="{Binding Speed}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Yavaşça gir (fade in)" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.fadeIn}" Style="{StaticResource Label}"/>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding FadeInSec, Converter={StaticResource Sec}}"/>
                 <Slider DockPanel.Dock="Right" Width="170" Minimum="0" Maximum="5" Value="{Binding FadeInSec}"/>
               </DockPanel>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Yavaşça çık (fade out)" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.fadeOut}" Style="{StaticResource Label}"/>
                 <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Text="{Binding FadeOutSec, Converter={StaticResource Sec}}"/>
                 <Slider DockPanel.Dock="Right" Width="170" Minimum="0" Maximum="5" Value="{Binding FadeOutSec}"/>
               </DockPanel>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="DAVRANIŞ" Style="{StaticResource Section}"/>
+          <TextBlock Text="{DynamicResource L.secBehavior}" Style="{StaticResource Section}"/>
           <Border Style="{StaticResource Card}">
             <StackPanel Margin="0,4">
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Döngü" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.loop}" Style="{StaticResource Label}"/>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding Loop}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
                 <StackPanel>
-                  <TextBlock Text="Basılı tuttukça çal" Style="{StaticResource Label}"/>
-                  <TextBlock Text="Tuşu bırakınca susar" Style="{StaticResource Hint}"/>
+                  <TextBlock Text="{DynamicResource L.hold}" Style="{StaticResource Label}"/>
+                  <TextBlock Text="{DynamicResource L.holdHint}" Style="{StaticResource Hint}"/>
                 </StackPanel>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding HoldToPlay}"/>
               </DockPanel>
               <Border Style="{StaticResource Div}"/>
               <DockPanel Style="{StaticResource SetRow}">
-                <TextBlock Text="Favori" Style="{StaticResource Label}"/>
+                <TextBlock Text="{DynamicResource L.fav}" Style="{StaticResource Label}"/>
                 <CheckBox Style="{StaticResource Switch}" DockPanel.Dock="Right" IsChecked="{Binding Favorite}"/>
               </DockPanel>
             </StackPanel>
           </Border>
 
           <DockPanel Margin="0,14,0,0" LastChildFill="False">
-            <Button Content="Varsayılana döndür" Style="{StaticResource GlassBtn}" Click="EditReset_Click"/>
+            <Button Content="{DynamicResource L.editReset}" Style="{StaticResource GlassBtn}" Click="EditReset_Click"/>
             <Button DockPanel.Dock="Right" Style="{StaticResource GlassBtn}" Click="EditDelete_Click">
-              <TextBlock Text="Kaldır" Foreground="#FF5C7A"/>
+              <TextBlock Text="{DynamicResource L.remove}" Foreground="#FF5C7A"/>
             </Button>
           </DockPanel>
         </StackPanel>
@@ -470,7 +478,7 @@
 
       <!-- sürükle bırak katmanı -->
       <Border x:Name="DropHint" Visibility="Collapsed" Margin="12" CornerRadius="16" BorderThickness="1.5" BorderBrush="#99990033" Background="#22990033" IsHitTestVisible="False">
-        <TextBlock Text="Bırak, ekleyeyim" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15"/>
+        <TextBlock Text="{DynamicResource L.drop}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15"/>
       </Border>
     </Grid>
 
@@ -493,8 +501,8 @@
             </Grid>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal">
-            <Button x:Name="BtnPause" Style="{StaticResource IconBtn}" Content="&#xE769;" ToolTip="Duraklat / devam" Click="Pause_Click"/>
-            <Button Style="{StaticResource IconBtn}" Content="&#xE71A;" ToolTip="Hepsini durdur" Click="StopAll_Click"/>
+            <Button x:Name="BtnPause" Style="{StaticResource IconBtn}" Content="&#xE769;" ToolTip="{DynamicResource L.tipPause}" Click="Pause_Click"/>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE71A;" ToolTip="{DynamicResource L.tipStopAll}" Click="StopAll_Click"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -508,23 +516,23 @@
             <ColumnDefinition/>
           </Grid.ColumnDefinitions>
           <DockPanel>
-            <ToggleButton x:Name="TgMic" Style="{StaticResource IconToggle}" Content="&#xE720;" ToolTip="Sesleri mikrofona gönder (aç/kapa)" Click="TgMic_Click"/>
+            <ToggleButton x:Name="TgMic" Style="{StaticResource IconToggle}" Content="&#xE720;" ToolTip="{DynamicResource L.tipSendMic}" Click="TgMic_Click"/>
             <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
               <DockPanel>
-                <TextBlock Text="ONLAR" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
+                <TextBlock Text="{DynamicResource L.them}" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
                 <TextBlock x:Name="MicPct" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="9.5" Foreground="{StaticResource TextDim}"/>
               </DockPanel>
-              <Slider x:Name="SlMic" Minimum="0" Maximum="1" Height="18" ValueChanged="SlMic_ValueChanged" ToolTip="Discord'dakilerin duyduğu seviye"/>
+              <Slider x:Name="SlMic" Minimum="0" Maximum="1" Height="18" ValueChanged="SlMic_ValueChanged" ToolTip="{DynamicResource L.tipThemVol}"/>
             </StackPanel>
           </DockPanel>
           <DockPanel Grid.Column="2">
-            <ToggleButton x:Name="TgSpk" Style="{StaticResource IconToggle}" Content="&#xE767;" ToolTip="Ben de duyayım (aç/kapa)" Click="TgSpk_Click"/>
+            <ToggleButton x:Name="TgSpk" Style="{StaticResource IconToggle}" Content="&#xE767;" ToolTip="{DynamicResource L.tipHearToo}" Click="TgSpk_Click"/>
             <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
               <DockPanel>
-                <TextBlock Text="BEN" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
+                <TextBlock Text="{DynamicResource L.me}" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
                 <TextBlock x:Name="SpkPct" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="9.5" Foreground="{StaticResource TextDim}"/>
               </DockPanel>
-              <Slider x:Name="SlSpk" Minimum="0" Maximum="1" Height="18" ValueChanged="SlSpk_ValueChanged" ToolTip="Senin kulaklığında duyduğun seviye (onlarınkinden bağımsız)"/>
+              <Slider x:Name="SlSpk" Minimum="0" Maximum="1" Height="18" ValueChanged="SlSpk_ValueChanged" ToolTip="{DynamicResource L.tipMeVol}"/>
             </StackPanel>
           </DockPanel>
         </Grid>

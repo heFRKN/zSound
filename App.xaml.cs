@@ -15,6 +15,7 @@ namespace zSound
             // mikrofon eklentisi kur/kaldır: yönetici olarak açılan arayüzsüz kopya (zSound zaten açıkken de çalışmalı)
             if (e.Args.Length > 0 && e.Args[0] == "--apo")
             {
+                L.Set(Core.Config.Load().Settings.Language); // hata mesajları kullanıcının dilinde dönsün
                 Shutdown(Core.MicApo.RunCommand(e.Args));
                 return;
             }
@@ -45,6 +46,7 @@ namespace zSound
 
             // GPU sürücüsü yüklenmez → VRAM ~0, RAM daha düşük. Arayüz statik, CPU farkı yok.
             var cfg = Core.Config.Load();
+            L.Set(cfg.Settings.Language);
             if (!cfg.Settings.GpuRender)
                 System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
             base.OnStartup(e);

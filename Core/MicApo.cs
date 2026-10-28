@@ -132,9 +132,9 @@ namespace zSound.Core
                 await p.WaitForExitAsync();
                 if (p.ExitCode == 0) return null;
                 var msg = File.Exists(result) ? File.ReadAllText(result).Trim() : "";
-                return msg.Length > 0 ? msg : "İşlem başarısız (kod " + p.ExitCode + ")";
+                return msg.Length > 0 ? msg : L.F("apoFailCode", p.ExitCode);
             }
-            catch (Win32Exception e) when (e.NativeErrorCode == 1223) { return "Yönetici izni verilmedi"; }
+            catch (Win32Exception e) when (e.NativeErrorCode == 1223) { return L.T("apoDenied"); }
             catch (Exception e) { return e.Message; }
             finally { try { File.Delete(result); } catch { } }
         }
@@ -159,7 +159,7 @@ namespace zSound.Core
                     catch (Exception e)
                     {
                         try { Uninstall(); } catch { }
-                        throw new Exception("Kurulum doğrulanamadı, her şey geri alındı.\n\n" + e.Message, e);
+                        throw new Exception(L.F("apoVerifyFail", e.Message), e);
                     }
                 }
                 else if (verb == "uninstall") Uninstall();
@@ -167,7 +167,7 @@ namespace zSound.Core
                 {
                     WriteResult(result, Audio.MicProbe.Run(id));
                 }
-                else throw new ArgumentException("Bilinmeyen komut: " + verb);
+                else throw new ArgumentException(L.F("apoUnknownCmd", verb));
                 return 0;
             }
             catch (Exception e)
@@ -195,10 +195,10 @@ namespace zSound.Core
 
         static void Install(string deviceId)
         {
-            var g = EndpointGuid(deviceId) ?? throw new Exception("Mikrofon bulunamadı");
+            var g = EndpointGuid(deviceId) ?? throw new Exception(L.T("apoMicMissing"));
             using var hk = Hklm();
             using (var ep = hk.OpenSubKey(CaptureRoot + g))
-                if (ep == null) throw new Exception("Mikrofon kayıt defterinde yok");
+                if (ep == null) throw new Exception(L.T("apoMicNotInReg"));
 
             CopyDll();
             Register(hk);
@@ -235,7 +235,7 @@ namespace zSound.Core
                         fx.SetValue(modes, Modes, RegistryValueKind.MultiString);
                     }
                 }
-                if (written == 0) throw new Exception("Bu mikrofonun bütün efekt yuvaları sürücünün kendi efektleriyle dolu; üzerine yazılmadı.");
+                if (written == 0) throw new Exception(L.T("apoSlotsFull"));
 
                 // Windows 11 efekt paketi bağlantısı (Voice Clarity: "{9e6136e0-…},100") varken ses motoru
                 // zinciri paketten kurar ve uç noktadaki efektleri (bizimkini de) hiç yüklemez → yedekle, kaldır
@@ -260,7 +260,7 @@ namespace zSound.Core
         static void CopyDll()
         {
             byte[] data;
-            using (var s = typeof(MicApo).Assembly.GetManifestResourceStream("zsapo.dll") ?? throw new Exception("zsapo.dll exe içinde yok"))
+            using (var s = typeof(MicApo).Assembly.GetManifestResourceStream("zsapo.dll") ?? throw new Exception(L.T("apoNoDll")))
             {
                 data = new byte[s.Length];
                 s.ReadExactly(data);
@@ -432,7 +432,7 @@ namespace zSound.Core
         {
             int r = RegCreateKeyExW(new IntPtr(unchecked((int)0x80000002)), path, 0, null, 4 /* REG_OPTION_BACKUP_RESTORE */,
                                     0, IntPtr.Zero, out var h, out _);
-            if (r != 0) throw new Win32Exception(r, "Kayıt defteri açılamadı: " + path);
+            if (r != 0) throw new Win32Exception(r, L.F("apoRegOpen", path));
             return RegistryKey.FromHandle(h, RegistryView.Registry64);
         }
 

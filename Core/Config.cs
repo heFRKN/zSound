@@ -101,6 +101,7 @@ namespace zSound.Core
         public bool GpuRender { get; set; }
         public bool OnlyFavorites { get; set; }
         public bool Compact { get; set; }
+        public string Language { get; set; }              // "en" / "tr"; boş = Windows diline göre
         public bool AuditionOnRelease { get; set; } = true; // düzenleyicide kenarı bırakınca kesilen yeri çal
         public double WinW { get; set; } = 460;
         public double WinH { get; set; } = 640;

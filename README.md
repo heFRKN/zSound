@@ -13,13 +13,13 @@ A lightweight soundboard for Windows that plays sounds **directly through your r
 - Your own voice keeps working; optional **ducking** lowers your mic while a sound plays
 - Play many sounds at once, with a limiter so nothing clips
 - Global hotkeys (including key combos like `Num1+Num2` and mouse side buttons), hold-to-play, loop
-- Trim editor with waveform, fade in/out, speed/pitch, per-sound volume, loudness normalization
+- Trim editor with a zoomable waveform, time ruler, play/stop and "listen to the cut" buttons, fade in/out, speed/pitch, per-sound volume, loudness normalization
 - Separate volume for "them" (mic) and "me" (your headphones)
 - Optional automatic push-to-talk key while a sound is playing
-- Drag & drop audio **and video** files (mp3, wav, ogg, flac, m4a, mp4, mkv, webm…)
+- Drag & drop audio **and video** files (mp3, wav, ogg, flac, m4a, mp4, mkv, webm…). zSound keeps its own copy, so deleting the original (e.g. clearing Downloads) doesn't break the sound
+- Add the same file more than once to use different parts of it
+- English and Turkish interface (Settings → Language), switches instantly
 - Tray mode, starts with Windows, very low CPU/RAM when idle
-
-> The user interface is currently in Turkish.
 
 ### Requirements
 - Windows 10 or 11, 64-bit
@@ -28,18 +28,19 @@ A lightweight soundboard for Windows that plays sounds **directly through your r
 
 ### Install & first use
 1. Download `zSound.exe` from [Releases](../../releases) and run it.
-2. Open **Settings** (gear icon) → under *CİHAZLAR* pick:
-   - **Senin duyduğun** = your headphones/speakers
-   - **Gerçek mikrofonun** = your real microphone
-3. Under *MİKROFON* → **Mikrofon eklentisi** → click **Kur** (Install) and accept the admin prompt.
+2. Open **Settings** (gear icon). The language follows Windows on first start; change it at the top under **Language**. Then under *DEVICES* pick:
+   - **What you hear** = your headphones/speakers
+   - **Your real microphone** = your real microphone
+3. Under *MICROPHONE* → **Microphone plugin** → click **Install** and accept the admin prompt.
    - Windows audio restarts for a few seconds.
    - A **3-second test tone** is sent through your mic and measured. If it doesn't come through, everything is rolled back automatically.
-4. When the status says **"Etkin"** (active), sounds you play go out through your microphone.
+4. When the plugin shows **"Active"**, sounds you play go out through your microphone.
 
 ### Usage
 - Drag files onto the window (or use **+**).
 - Double-click / Enter to play. Right-click a sound to edit, trim or assign a hotkey.
-- Bottom bar: **ONLAR** = volume others hear, **BEN** = volume you hear.
+- Trim editor: mouse wheel zooms, Shift+wheel or right-drag scrolls, click the ruler to listen from there, **Space** plays/stops the selection.
+- Bottom bar: **THEM** = volume others hear, **ME** = volume you hear.
 - Command line (while zSound is running): `zSound.exe --play "name"`, `--stop`, `--pause`, `--random`, `--add "file"`.
 
 ### Discord tips (important)
@@ -50,7 +51,7 @@ Discord processes sounds like your voice and can cut them. In *User Settings →
 - Use **Push to Talk**, or turn off automatic input sensitivity and lower the threshold.
 
 ### Uninstall
-Settings → **Mikrofon eklentisi → Kaldır** (Remove). Every registry value the installer changed is restored exactly as it was, and the plugin files are deleted. Then delete `zSound.exe` and `%AppData%\zSound` (your settings).
+Settings → **Microphone plugin → Remove**. Every registry value the installer changed is restored exactly as it was, and the plugin files are deleted. Then delete `zSound.exe` and `%AppData%\zSound` (your settings and stored sound copies).
 
 ### What the installer changes (transparency)
 - Copies `zsapo.dll` to `C:\Program Files\zSound\`
@@ -96,10 +97,12 @@ Issues and pull requests are welcome. Licensed under the [MIT License](LICENSE).
 - Kendi sesin normal gitmeye devam eder; istersen ses çalarken mikrofonun kısılır (**ducking**)
 - Aynı anda birden fazla ses; limiter sayesinde patlama/cızırtı olmaz
 - Global kısayollar (`Num1+Num2` gibi kombinasyonlar, fare yan tuşları), basılı tuttukça çal, döngü
-- Dalga formlu kırpma ekranı, fade in/out, hız/perde, ses başına seviye, ses eşitleme
+- Yakınlaştırılabilir dalga formu ve zaman cetveli olan kırpma ekranı, çal/durdur ve "kesilen yeri dinle" butonları, fade in/out, hız/perde, ses başına seviye, ses eşitleme
 - "Onlar" (mikrofon) ve "ben" (kulaklık) için ayrı ses seviyesi
 - Ses çalarken bas-konuş tuşunu otomatik basılı tutma
-- Ses **ve video** dosyalarını sürükle bırak (mp3, wav, ogg, flac, m4a, mp4, mkv, webm…)
+- Ses **ve video** dosyalarını sürükle bırak (mp3, wav, ogg, flac, m4a, mp4, mkv, webm…). zSound kendi kopyasını tutar; orijinali silsen de (ör. İndirilenler'i temizlesen) ses gitmez
+- Aynı dosyayı birden fazla ekleyip farklı kısımlarını kullanabilirsin
+- Türkçe ve İngilizce arayüz (Ayarlar → Dil), anında değişir
 - Tepsi modu, Windows ile başlama, boştayken çok düşük CPU/RAM
 
 ### Gereksinimler
@@ -109,17 +112,18 @@ Issues and pull requests are welcome. Licensed under the [MIT License](LICENSE).
 
 ### Kurulum ve ilk kullanım
 1. [Releases](../../releases) sayfasından `zSound.exe`'yi indir ve çalıştır.
-2. **Ayarlar** (dişli simgesi) → *CİHAZLAR* altında:
+2. **Ayarlar** (dişli simgesi). Dil ilk açılışta Windows'a göre seçilir; en üstteki **Dil** kısmından değiştirebilirsin. Sonra *CİHAZLAR* altında:
    - **Senin duyduğun** = kulaklığın/hoparlörün
    - **Gerçek mikrofonun** = gerçek mikrofonun
 3. *MİKROFON* → **Mikrofon eklentisi** → **Kur**'a bas, yönetici iznine **Evet** de.
    - Windows sesi birkaç saniye kesilir.
    - Mikrofona **3 saniyelik bir test sesi** gönderilip ölçülür. Ses geçmezse her şey otomatik geri alınır.
-4. Durum **"Etkin"** olduğunda çaldığın sesler mikrofonundan gider.
+4. Eklenti **"Etkin"** yazdığında çaldığın sesler mikrofonundan gider.
 
 ### Kullanım
 - Dosyaları pencereye sürükle (ya da **+**).
 - Çift tık / Enter ile çal. Sağ tık: düzenle, kırp, kısayol ata.
+- Kırpma ekranı: tekerlek yakınlaştırır, Shift+tekerlek ya da sağ tıkla sürükleme kaydırır, cetvele tıklayınca oradan çalar, **Boşluk** seçimi çalar/durdurur.
 - Alt çubuk: **ONLAR** = karşı tarafın duyduğu seviye, **BEN** = senin duyduğun seviye.
 - Komut satırı (zSound açıkken): `zSound.exe --play "isim"`, `--stop`, `--pause`, `--random`, `--add "dosya"`.
 
@@ -131,7 +135,7 @@ Discord sesleri senin sesin gibi işler ve kesebilir. *Kullanıcı Ayarları →
 - **Bas-Konuş** kullan ya da otomatik giriş hassasiyetini kapatıp eşiği düşür.
 
 ### Kaldırma
-Ayarlar → **Mikrofon eklentisi → Kaldır**. Kurulumun değiştirdiği her kayıt defteri değeri birebir eski haline döner, eklenti dosyaları silinir. Sonra `zSound.exe`'yi ve `%AppData%\zSound` klasörünü (ayarların) silebilirsin.
+Ayarlar → **Mikrofon eklentisi → Kaldır**. Kurulumun değiştirdiği her kayıt defteri değeri birebir eski haline döner, eklenti dosyaları silinir. Sonra `zSound.exe`'yi ve `%AppData%\zSound` klasörünü (ayarların ve seslerin kopyaları) silebilirsin.
 
 ### Kurulum neyi değiştirir (şeffaflık)
 - `zsapo.dll`'i `C:\Program Files\zSound\` içine kopyalar
