@@ -288,7 +288,7 @@
               </DockPanel>
             </StackPanel>
           </Border>
-          <TextBlock Text="zSound 1.1" Style="{StaticResource Hint}" HorizontalAlignment="Center" Margin="0,16,0,4" Foreground="{StaticResource TextFaint}"/>
+          <TextBlock Text="zSound 1.2" Style="{StaticResource Hint}" HorizontalAlignment="Center" Margin="0,16,0,4" Foreground="{StaticResource TextFaint}"/>
         </StackPanel>
       </ScrollViewer>
 

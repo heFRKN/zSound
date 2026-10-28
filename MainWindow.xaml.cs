@@ -57,6 +57,7 @@ namespace zSound
                 Left = S.WinX; Top = S.WinY;
             }
 
+            Library.Sweep(cfg.Sounds.Select(s => s.Path));
             foreach (var s in cfg.Sounds) items.Add(new SoundVM(s));
             view = CollectionViewSource.GetDefaultView(items);
             view.Filter = Filter;
@@ -107,6 +108,7 @@ namespace zSound
             UpdateStatus();
             tick.Start();
             MeasureMissing();
+            AdoptExisting();
 
             SourceInitialized += OnSourceInitialized;
             StateChanged += (_, _) =>
@@ -150,36 +152,74 @@ namespace zSound
 
         void UpdateEmpty() => Empty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        void AddPaths(IEnumerable<string> paths)
+        async void AddPaths(IEnumerable<string> paths)
         {
+            // klasörden gelenlerde zaten ekli olanları atla; tek tek eklenen dosya her seferinde
+            // yeni ses olur (aynı sesin/videonun başka bir kısmını kullanmak için)
+            var have = new HashSet<string>(cfg.Sounds.Select(s => s.Source ?? s.Path), StringComparer.OrdinalIgnoreCase);
             var files = new List<string>();
             foreach (var p in paths)
             {
                 try
                 {
                     if (Directory.Exists(p))
-                        files.AddRange(Directory.EnumerateFiles(p, "*.*", SearchOption.AllDirectories).Where(IsAudio));
+                        files.AddRange(Directory.EnumerateFiles(p, "*.*", SearchOption.AllDirectories).Where(f => IsAudio(f) && !have.Contains(f)));
                     else if (File.Exists(p) && IsAudio(p)) files.Add(p);
                 }
                 catch { }
             }
-            var have = new HashSet<string>(cfg.Sounds.Select(s => s.Path), StringComparer.OrdinalIgnoreCase);
+            if (files.Count == 0) return;
+
             SoundVM firstNew = null;
-            foreach (var f in files)
+            string err = null;
+            for (int i = 0; i < files.Count; i++)
             {
-                if (!have.Add(f)) continue;
-                var s = new Sound { Path = f, Name = Path.GetFileNameWithoutExtension(f) };
+                var f = files[i];
+                SetStatus(files.Count == 1 ? "Kopyalanıyor…" : $"Kopyalanıyor… ({i + 1}/{files.Count})", false);
+                string stored;
+                try { stored = await Task.Run(() => Library.Import(f)); }
+                catch (Exception ex) { err = "Eklenemedi: " + Path.GetFileName(f) + " (" + ex.Message + ")"; continue; }
+                var s = new Sound { Path = stored, Source = f, Name = UniqueName(Path.GetFileNameWithoutExtension(f)) };
                 cfg.Sounds.Add(s);
                 var vm = new SoundVM(s);
                 items.Add(vm);
                 firstNew ??= vm;
                 Measure(vm);
             }
+            if (err != null) SetStatus(err, true); else UpdateStatus();
             UpdateEmpty();
             SaveSoon();
             if (firstNew != null) List.ScrollIntoView(firstNew);
             // tek ses eklendiyse direkt kırpma ekranını aç
             if (firstNew != null && files.Count == 1) OpenEditor(firstNew);
+        }
+
+        /// aynı isim varsa "isim (2)", "isim (3)"…
+        string UniqueName(string name)
+        {
+            var names = new HashSet<string>(cfg.Sounds.Select(s => s.Name), StringComparer.CurrentCultureIgnoreCase);
+            if (!names.Contains(name)) return name;
+            int n = 2;
+            while (names.Contains($"{name} ({n})")) n++;
+            return $"{name} ({n})";
+        }
+
+        /// eski sürümden kalan, dışarıdaki dosyayı gösteren sesleri kütüphaneye kopyala
+        async void AdoptExisting()
+        {
+            foreach (var s in cfg.Sounds.Where(x => !Library.Owns(x.Path) && File.Exists(x.Path)).ToList())
+            {
+                try
+                {
+                    var src = s.Path;
+                    var stored = await Task.Run(() => Library.Import(src));
+                    if (s.Path != src) continue; // bu arada değişti
+                    s.Source ??= src;
+                    s.Path = stored;
+                    SaveSoon();
+                }
+                catch { }
+            }
         }
 
         static bool IsAudio(string p) => Exts.Contains(Path.GetExtension(p).ToLowerInvariant());
@@ -226,12 +266,17 @@ namespace zSound
 
         void Remove(IEnumerable<SoundVM> vms)
         {
+            var paths = new List<string>();
             foreach (var vm in vms.ToList())
             {
                 engine.Stop(vm.S);
                 cfg.Sounds.Remove(vm.S);
                 items.Remove(vm);
+                paths.Add(vm.S.Path);
             }
+            // kopyayı başka ses kullanmıyorsa sil (çalan ses durana kadar biraz bekle)
+            var unused = paths.Where(p => !cfg.Sounds.Any(x => string.Equals(x.Path, p, StringComparison.OrdinalIgnoreCase))).Distinct().ToList();
+            if (unused.Count > 0) Task.Delay(1000).ContinueWith(_ => unused.ForEach(Library.Delete));
             UpdateEmpty();
             SaveSoon();
             UpdateMouseHook();
@@ -299,7 +344,7 @@ namespace zSound
             if (sel.Count == 1)
                 RowMenu.Items.Add(Item("", "Dosya konumunu aç", () =>
                 {
-                    try { Process.Start("explorer.exe", "/select,\"" + one.S.Path + "\""); } catch { }
+                    try { Process.Start("explorer.exe", "/select,\"" + (File.Exists(one.S.Source) ? one.S.Source : one.S.Path) + "\""); } catch { }
                 }));
             RowMenu.Items.Add(new Separator());
             RowMenu.Items.Add(Item("", sel.Count > 1 ? $"{sel.Count} sesi kaldır" : "Kaldır", () => Remove(sel)));
@@ -869,7 +914,7 @@ namespace zSound
             var s = vm.S;
             EditPanel.DataContext = null;
             EditPanel.DataContext = s;
-            EditPath.Text = s.Path;
+            EditPath.Text = s.Source ?? s.Path;
             BtnSoundKey.Content = KeyLabel(s.Key);
             ShowView(EditView);
             EditView.ScrollToTop();
@@ -1103,8 +1148,7 @@ namespace zSound
                 case "random": PlayRandom(); break;
                 case "add":
                     ShowFromTray();
-                    var existing = items.FirstOrDefault(v => v.S.Path.Equals(arg, StringComparison.OrdinalIgnoreCase));
-                    if (existing != null) OpenEditor(existing); else AddPaths(new[] { arg });
+                    AddPaths(new[] { arg });
                     break;
                 case "play":
                     var s = cfg.Sounds.FirstOrDefault(x => x.Name.Equals(arg, StringComparison.OrdinalIgnoreCase))

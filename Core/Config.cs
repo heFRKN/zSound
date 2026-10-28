@@ -45,7 +45,8 @@ namespace zSound.Core
     public sealed class Sound
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
-        public string Path { get; set; }
+        public string Path { get; set; }             // zSound'un kendi kopyası (Library)
+        public string Source { get; set; }           // eklendiği orijinal dosya (bilgi için)
         public string Name { get; set; }
         public double DurationSec { get; set; }
         public Hotkey Key { get; set; }
