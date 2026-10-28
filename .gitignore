@@ -1,0 +1,23 @@
+# build output
+bin/
+obj/
+dist/
+*.user
+*.suo
+.vs/
+.vscode/
+
+# native build artifacts (built by build.ps1)
+native/*.dll
+native/*.lib
+native/*.pdb
+native/*.exp
+
+# local toolchains
+native/.tools/
+native/.dotnet/
+__pycache__/
+
+# logs / local data
+*.log
+reports/
