@@ -61,6 +61,7 @@ namespace zSound.Audio
         public Sound Sound;
         public Voice A, B;
         public bool Stopping;
+        public bool Preview;    // düzenleyici dinlemesi (sadece hoparlör)
         Voice Any => A ?? B;
         public bool Done => (A == null || A.Done) && (B == null || B.Done);
         public bool Paused => Any?.Paused ?? false;
@@ -229,6 +230,28 @@ namespace zSound.Audio
             plays.Add(pb);
             snd.PlayCount++;
             LastError = null;
+            Changed?.Invoke();
+            return pb;
+        }
+
+        /// düzenleyicide dinleme: sadece hoparlörden, mikrofona gitmez; from..to kırpmadan bağımsız
+        public async Task<Playback> Preview(Sound snd, double from, double to)
+        {
+            if (monitor == null) { LastError = "Hoparlör bulunamadı"; Changed?.Invoke(); return null; }
+            var pb = new Playback { Sound = snd, Preview = true };
+            try
+            {
+                pb.B = await Task.Run(() => new Voice(snd, from, to, true));
+            }
+            catch (Exception e)
+            {
+                LastError = "Açılamadı: " + System.IO.Path.GetFileName(snd.Path) + " (" + e.Message + ")";
+                Changed?.Invoke();
+                return null;
+            }
+            monitor.Mixer.Add(pb.B);
+            monitor.Wake();
+            plays.Add(pb);
             Changed?.Invoke();
             return pb;
         }

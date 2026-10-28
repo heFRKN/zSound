@@ -38,6 +38,9 @@ namespace zSound
         DeviceWatcher watcher;
         DispatcherTimer devTimer, apoTimer;
         SoundVM editing;
+        Playback preview;       // düzenleyicideki dinleme
+        int previewToken;
+        bool previewStarting;   // dosya açılıyor, henüz çalmıyor
         Sound last;
         bool exiting, loadingSettings;
 
@@ -83,7 +86,14 @@ namespace zSound
             catch { }
 
             Wave.TrimChanged += (s, e) => { if (editing != null) { editing.S.StartSec = s; editing.S.EndSec = e >= Wave.Duration - 0.01 ? 0 : e; UpdateTrimText(); } };
-            Wave.TrimCommitted += () => { editing?.Refresh(); SaveSoon(); };
+            Wave.TrimCommitted += atStart =>
+            {
+                editing?.Refresh();
+                SaveSoon();
+                if (S.AuditionOnRelease) Audition(atStart);
+            };
+            Wave.Seek += t => StartPreview(t, t < Wave.End ? Wave.End : 0);
+            Wave.ViewChanged += UpdateZoomText;
 
             keys = new Hotkeys(Dispatcher);
             keys.Key += OnKey;
@@ -411,7 +421,13 @@ namespace zSound
 
         void OnWindowKey(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+            if (e.Key == Key.Space && EditView.Visibility == Visibility.Visible && keys.Capture == null
+                && Keyboard.Modifiers == ModifierKeys.None && e.OriginalSource is not TextBox)
+            {
+                PlaySel_Click(null, null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 ShowView(LibraryView);
                 Search.Focus(); Search.SelectAll();
@@ -450,8 +466,10 @@ namespace zSound
 
             if (editing != null)
             {
-                var ep = plays.LastOrDefault(p => p.Sound == editing.S && !p.Stopping && !p.Done);
-                Wave.Playhead = ep?.Position ?? -1;
+                if (preview != null && (preview.Stopping || preview.Done)) preview = null;
+                var tryPb = plays.LastOrDefault(p => p.Sound == editing.S && !p.Preview && !p.Stopping && !p.Done);
+                Wave.Playhead = (preview ?? tryPb)?.Position ?? -1;
+                UpdateEditButtons(tryPb != null);
             }
 
             if (cur != null)
@@ -845,7 +863,9 @@ namespace zSound
 
         async void OpenEditor(SoundVM vm)
         {
+            StopPreview();
             editing = vm;
+            AuditionSwitch.IsChecked = S.AuditionOnRelease;
             var s = vm.S;
             EditPanel.DataContext = null;
             EditPanel.DataContext = s;
@@ -863,9 +883,11 @@ namespace zSound
             {
                 var (peaks, dur) = await Task.Run(() =>
                 {
-                    var p = Engine.Peaks(s.Path, 1200);
-                    using var st = Voice.Open(s.Path);
-                    return (p, st.TotalTime.TotalSeconds);
+                    double d;
+                    using (var st = Voice.Open(s.Path)) d = st.TotalTime.TotalSeconds;
+                    // yakınlaşınca da detay kalsın: ~1 ms çözünürlük (uzun dosyalarda sınırlı)
+                    var p = Engine.Peaks(s.Path, (int)Math.Clamp(d * 1000, 4000, 600000));
+                    return (p, d);
                 });
                 if (token != waveToken || editing?.S != s) return; // bu arada başka ses açıldı
                 s.DurationSec = dur;
@@ -879,7 +901,7 @@ namespace zSound
             }
         }
 
-        static string Ts(double sec) => TimeSpan.FromSeconds(Math.Round(Math.Max(0, sec), 1)).ToString(sec >= 3600 ? @"h\:mm\:ss\.f" : @"m\:ss\.f");
+        static string Ts(double sec) => TimeSpan.FromSeconds(Math.Round(Math.Max(0, sec), 2)).ToString(sec >= 3600 ? @"h\:mm\:ss\.ff" : @"m\:ss\.ff");
 
         void UpdateTrimText()
         {
@@ -892,9 +914,11 @@ namespace zSound
         {
             if (editing == null || Wave.Duration <= 0) return;
             var tag = (string)((FrameworkElement)sender).Tag;
-            double d = tag[1] == '+' ? 0.1 : -0.1;
-            if (tag[0] == 's') Wave.SetTrim(Math.Min(Wave.Start + d, Wave.End - 0.05), Wave.End);
-            else Wave.SetTrim(Wave.Start, Math.Max(Wave.End + d, Wave.Start + 0.05));
+            double d = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 0.01 : 0.1;
+            if (tag[1] == '-') d = -d;
+            if (tag[0] == 's') Wave.SetTrim(Math.Min(Wave.Start + d, Wave.End - Waveform.MinSel), Wave.End);
+            else Wave.SetTrim(Wave.Start, Math.Max(Wave.End + d, Wave.Start + Waveform.MinSel));
+            Wave.Reveal(tag[0] == 's' ? Wave.Start : Wave.End);
             editing.S.StartSec = Wave.Start;
             editing.S.EndSec = Wave.End >= Wave.Duration - 0.01 ? 0 : Wave.End;
             UpdateTrimText();
@@ -913,6 +937,7 @@ namespace zSound
 
         void CloseEditor()
         {
+            StopPreview();
             if (editing == null) return;
             if (editing.S.StartSec >= editing.S.EndSec && editing.S.EndSec > 0) editing.S.EndSec = 0;
             if (string.IsNullOrWhiteSpace(editing.S.Name)) editing.S.Name = Path.GetFileNameWithoutExtension(editing.S.Path);
@@ -923,7 +948,98 @@ namespace zSound
         }
 
         void EditBack_Click(object sender, RoutedEventArgs e) { CloseEditor(); ShowView(LibraryView); }
-        void EditPreview_Click(object sender, RoutedEventArgs e) { if (editing != null) { engine.Stop(editing.S); Play(editing.S); } }
+        void EditPreview_Click(object sender, RoutedEventArgs e)
+        {
+            if (editing == null) return;
+            StopPreview();
+            bool was = engine.Plays.Any(p => p.Sound == editing.S && !p.Preview && !p.Stopping && !p.Done);
+            engine.Stop(editing.S);
+            if (!was) Play(editing.S);
+        }
+
+        // ── dinleme (sadece hoparlör) ──
+
+        const double AuditionSec = 1.5;
+
+        async void StartPreview(double from, double to)
+        {
+            if (editing == null || !Wave.HasData) return;
+            var s = editing.S;
+            preview?.Stop();
+            preview = null;
+            if (!File.Exists(s.Path)) { SetStatus("Dosya bulunamadı: " + s.Name, true); return; }
+            int token = ++previewToken;
+            previewStarting = true;
+            UpdateEditButtons(shownTrying);
+            var pb = await engine.Preview(s, from, to);
+            if (token == previewToken) previewStarting = false;
+            if (token != previewToken || editing?.S != s) { pb?.Stop(); return; } // bu arada durduruldu / başka ses açıldı
+            if (pb == null) { SetStatus(engine.LastError ?? "Çalınamadı", true); UpdateEditButtons(shownTrying); return; }
+            preview = pb;
+            if (!tick.IsEnabled) tick.Start();
+        }
+
+        void StopPreview()
+        {
+            previewToken++;
+            previewStarting = false;
+            preview?.Stop();
+            preview = null;
+            UpdateEditButtons(shownTrying);
+        }
+
+        /// kesilen yeri kısaca dinle: başlangıçtan sonrası ya da bitişten öncesi
+        void Audition(bool atStart)
+        {
+            double len = Math.Min(AuditionSec, Wave.End - Wave.Start);
+            if (atStart) StartPreview(Wave.Start, Wave.Start + len);
+            else StartPreview(Wave.End - len, Wave.End);
+        }
+
+        void PlaySel_Click(object sender, RoutedEventArgs e)
+        {
+            if (shownPlaying) StopPreview();
+            else StartPreview(Wave.Start, Wave.End);
+        }
+
+        void Audition_Click(object sender, RoutedEventArgs e) => Audition((string)((FrameworkElement)sender).Tag == "s");
+
+        void AuditionSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            S.AuditionOnRelease = AuditionSwitch.IsChecked == true;
+            SaveSoon();
+        }
+
+        bool shownPlaying, shownTrying;
+
+        void UpdateEditButtons(bool trying)
+        {
+            bool playing = previewStarting || preview != null;
+            if (playing != shownPlaying)
+            {
+                shownPlaying = playing;
+                PlaySelIcon.Text = playing ? "\uE71A" : "\uE768";
+                PlaySelText.Text = playing ? "Durdur" : "Çal";
+            }
+            if (trying != shownTrying)
+            {
+                shownTrying = trying;
+                TryIcon.Text = trying ? "\uE71A" : "\uE768";
+                TryText.Text = trying ? "Durdur" : "Dene";
+            }
+        }
+
+        void ZoomIn_Click(object sender, RoutedEventArgs e) => Wave.ZoomBy(0.5);
+        void ZoomOut_Click(object sender, RoutedEventArgs e) => Wave.ZoomBy(2);
+        void ZoomSel_Click(object sender, RoutedEventArgs e) => Wave.ZoomToSelection();
+        void ZoomFit_Click(object sender, RoutedEventArgs e) => Wave.ZoomFit();
+
+        void UpdateZoomText()
+        {
+            double z = Wave.Zoom;
+            ZoomText.Text = z < 1.05 ? "1×" : z < 10 ? z.ToString("0.#") + "×" : Math.Round(z) + "×";
+            BtnZoomOut.IsEnabled = BtnZoomFit.IsEnabled = z > 1.001;
+        }
 
         void SoundKey_Click(object sender, RoutedEventArgs e)
         {
@@ -954,6 +1070,7 @@ namespace zSound
         {
             if (editing == null) return;
             var vm = editing;
+            StopPreview();
             editing = null;
             Remove(new[] { vm });
             ShowView(LibraryView);

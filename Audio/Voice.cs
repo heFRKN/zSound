@@ -15,6 +15,8 @@ namespace zSound.Audio
         readonly int ch, srcRate;
         readonly Sound snd;
         readonly long startFrame, endFrame;
+        readonly long fadeEnd;  // fade-out kırpmanın sonuna göre (önizleme aralığı farklı olabilir)
+        readonly bool loop, preview;
         readonly float[] rd;
         int rdLen, rdPos;
         float aL, aR, bL, bR;
@@ -57,21 +59,35 @@ namespace zSound.Audio
         }
 
         /// MTA (thread pool) üzerinde çağır: dosyayı açar, başa sarar, ilk tamponu doldurur.
-        public Voice(Sound snd)
+        public Voice(Sound snd) : this(snd, snd.StartSec, snd.EndSec, false) { }
+
+        /// from..to aralığını çalar (to ≤ 0 = sonuna kadar).
+        /// preview: düzenleyicide dinleme — döngü yok, hoparlör kapalı olsa da duyulur.
+        public Voice(Sound snd, double from, double to, bool preview)
         {
             this.snd = snd;
+            this.preview = preview;
+            loop = snd.Loop && !preview;
             stream = Open(snd.Path);
             sp = stream.ToSampleProvider();
             ch = sp.WaveFormat.Channels;
             srcRate = sp.WaveFormat.SampleRate;
             long total = (long)(stream.TotalTime.TotalSeconds * srcRate);
-            startFrame = (long)(Math.Max(0, snd.StartSec) * srcRate);
-            endFrame = snd.EndSec > 0 ? Math.Min(total, (long)(snd.EndSec * srcRate)) : total;
-            if (endFrame <= startFrame) endFrame = total;
-            if (startFrame >= endFrame) startFrame = 0;
+            (long trimStart, fadeEnd) = Range(snd.StartSec, snd.EndSec, total);
+            (startFrame, endFrame) = Range(from, to, total);
+            played = Math.Max(0, startFrame - trimStart);
             rd = new float[2048 * ch];
             Seek();
             Fill();
+        }
+
+        (long, long) Range(double from, double to, long total)
+        {
+            long a = (long)(Math.Max(0, from) * srcRate);
+            long b = to > 0 ? Math.Min(total, (long)(to * srcRate)) : total;
+            if (b <= a) b = total;
+            if (a >= b) a = 0;
+            return (a, b);
         }
 
         void Seek()
@@ -104,7 +120,7 @@ namespace zSound.Audio
                     played++;
                     return true;
                 }
-                if (!snd.Loop || StopRequested) break;
+                if (!loop || StopRequested) break;
                 try { Seek(); } catch { break; }
             }
             l = r = 0;
@@ -121,7 +137,7 @@ namespace zSound.Audio
                 primed = true;
             }
             double step = srcRate * (double)Math.Clamp(snd.Speed, 0.25f, 3f) / dstRate;
-            float vol = snd.Volume * (Engine.NormalizeOn ? snd.Gain : 1f) * bus;
+            float vol = snd.Volume * (Engine.NormalizeOn ? snd.Gain : 1f) * (preview ? 1f : bus);
             double fadeIn = snd.FadeInSec * srcRate, fadeOut = snd.FadeOutSec * srcRate;
             float stopStep = (float)(1.0 / (0.025 * dstRate));
             bool ended = false;
@@ -132,8 +148,8 @@ namespace zSound.Audio
                 if (fadeIn > 0 && played < fadeIn) g *= (float)(played / fadeIn);
                 if (fadeOut > 0 && !snd.Loop)
                 {
-                    double rem = endFrame - pos;
-                    if (rem < fadeOut) g *= (float)Math.Max(0, rem / fadeOut);
+                    double rem = fadeEnd - pos;
+                    if (rem >= 0 && rem < fadeOut) g *= (float)Math.Max(0, rem / fadeOut);
                 }
                 if (StopRequested)
                 {

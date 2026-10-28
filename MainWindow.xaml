@@ -297,10 +297,10 @@
         <StackPanel x:Name="EditPanel">
           <DockPanel Margin="0,2,0,10">
             <Button Style="{StaticResource IconBtn}" Content="&#xE72B;" Click="EditBack_Click" ToolTip="Geri (Esc)"/>
-            <Button DockPanel.Dock="Right" Style="{StaticResource AccentBtn}" Click="EditPreview_Click">
+            <Button DockPanel.Dock="Right" Style="{StaticResource GlassBtn}" Click="EditPreview_Click" ToolTip="Ayarlandığı yere çalar (mikrofon dahil)">
               <StackPanel Orientation="Horizontal">
-                <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
-                <TextBlock Text="Dene"/>
+                <TextBlock x:Name="TryIcon" Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                <TextBlock x:Name="TryText" Text="Dene"/>
               </StackPanel>
             </Button>
             <TextBlock Text="Kırp ve düzenle" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
@@ -308,42 +308,76 @@
 
           <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
             <StackPanel>
-              <Grid Height="96">
+              <Grid Height="150">
                 <local:Waveform x:Name="Wave"/>
                 <TextBlock x:Name="WaveLoading" Text="Dalga formu yükleniyor…" Foreground="{StaticResource TextFaint}" FontSize="11.5"
                            HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
               </Grid>
-              <Grid Margin="0,10,0,0">
+              <DockPanel Margin="0,10,0,0">
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnPlaySel" Style="{StaticResource AccentBtn}" Padding="12,6" MinWidth="92" Click="PlaySel_Click" ToolTip="Seçili kısmı dinle (Boşluk)">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock x:Name="PlaySelIcon" Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                      <TextBlock x:Name="PlaySelText" Text="Çal"/>
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="s" Click="Audition_Click" ToolTip="Kesilen başlangıcı dinle (ilk 1.5 sn)">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE892;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                      <TextBlock Text="Başı"/>
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource GlassBtn}" Padding="10,6" Margin="6,0,0,0" Tag="e" Click="Audition_Click" ToolTip="Kesilen sonu dinle (son 1.5 sn)">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Sonu"/>
+                      <TextBlock Text="&#xE893;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                  <Button x:Name="BtnZoomOut" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71F;" Click="ZoomOut_Click" ToolTip="Uzaklaş"/>
+                  <TextBlock x:Name="ZoomText" Text="1×" FontSize="11.5" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" MinWidth="30" TextAlignment="Center"/>
+                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE8A3;" Click="ZoomIn_Click" ToolTip="Yakınlaş (tekerlek)"/>
+                  <Button Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE71E;" Click="ZoomSel_Click" ToolTip="Seçime yakınlaş"/>
+                  <Button x:Name="BtnZoomFit" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="12" Content="&#xE740;" Click="ZoomFit_Click" ToolTip="Tamamını göster"/>
+                </StackPanel>
+              </DockPanel>
+              <Border Style="{StaticResource Div}" Margin="0,10,0,0"/>
+              <Grid Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto"/>
                   <ColumnDefinition/>
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="s-" Click="Nudge_Click" ToolTip="Başlangıç −0.1s"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="s-" Click="Nudge_Click" ToolTip="Başlangıç −0.1 sn (Shift: 0.01 sn)"/>
                   <StackPanel Margin="2,0" VerticalAlignment="Center">
                     <TextBlock Text="BAŞLANGIÇ" FontSize="9.5" Foreground="{StaticResource TextFaint}"/>
                     <TextBlock x:Name="TrimStartText" FontSize="12.5"/>
                   </StackPanel>
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="s+" Click="Nudge_Click" ToolTip="Başlangıç +0.1s"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="s+" Click="Nudge_Click" ToolTip="Başlangıç +0.1 sn (Shift: 0.01 sn)"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                   <TextBlock Text="UZUNLUK" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Center"/>
                   <TextBlock x:Name="TrimLenText" FontSize="12.5" Foreground="{StaticResource TextDim}" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="e-" Click="Nudge_Click" ToolTip="Bitiş −0.1s"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76B;" Tag="e-" Click="Nudge_Click" ToolTip="Bitiş −0.1 sn (Shift: 0.01 sn)"/>
                   <StackPanel Margin="2,0" VerticalAlignment="Center">
                     <TextBlock Text="BİTİŞ" FontSize="9.5" Foreground="{StaticResource TextFaint}" HorizontalAlignment="Right"/>
                     <TextBlock x:Name="TrimEndText" FontSize="12.5" HorizontalAlignment="Right"/>
                   </StackPanel>
-                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="e+" Click="Nudge_Click" ToolTip="Bitiş +0.1s"/>
+                  <Button Style="{StaticResource IconBtn}" Width="26" Height="26" FontSize="10" Content="&#xE76C;" Tag="e+" Click="Nudge_Click" ToolTip="Bitiş +0.1 sn (Shift: 0.01 sn)"/>
                 </StackPanel>
               </Grid>
-              <DockPanel Margin="0,8,0,0" LastChildFill="False">
-                <TextBlock Text="Kenarları sürükle · boşluğa tıkla" Style="{StaticResource Hint}" Foreground="{StaticResource TextFaint}" VerticalAlignment="Center"/>
+              <DockPanel Margin="0,10,0,0" LastChildFill="False">
+                <CheckBox x:Name="AuditionSwitch" Style="{StaticResource Switch}" VerticalAlignment="Center" Click="AuditionSwitch_Click"/>
+                <TextBlock Text="Bırakınca dinle" FontSize="12" Foreground="{StaticResource TextDim}" VerticalAlignment="Center" Margin="8,0,0,0"
+                           ToolTip="Kenarı bırakınca kestiğin yeri kısaca çalar"/>
                 <Button DockPanel.Dock="Right" Content="Tamamını al" Style="{StaticResource GlassBtn}" Padding="10,5" Click="TrimReset_Click"/>
               </DockPanel>
+              <TextBlock Style="{StaticResource Hint}" Foreground="{StaticResource TextFaint}" TextWrapping="Wrap" Margin="0,8,0,0"
+                         Text="Kenarları sürükle · tekerlek: yakınlaş · Shift+tekerlek ya da sağ tık sürükle: kaydır · üstteki cetvele tıkla: oradan dinle · Boşluk: çal/durdur"/>
             </StackPanel>
           </Border>
 
