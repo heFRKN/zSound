@@ -165,3 +165,12 @@ Gereksinimler: .NET 8 SDK, Zig 0.13 (`zig` PATH'te, `$env:ZIG` ya da `pip instal
 
 ### Katkı
 Issue ve pull request'ler açıktır. [MIT Lisansı](LICENSE) ile lisanslanmıştır.
+
+---
+
+## Destek · Support
+
+zSound ücretsiz ve açık kaynak. İşine yaradıysa destek olabilirsin.<br>
+<sub>zSound is free and open source. If it helped you, you can support its development.</sub>
+
+[![Kreosus](https://img.shields.io/badge/Kreosus-furkantiril-990033?style=flat-square)](https://kreosus.com/furkantiril)
